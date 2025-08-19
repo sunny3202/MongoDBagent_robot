@@ -1,0 +1,43 @@
+🔧 MongoDB 외부 접속 설정 가이드
+===============================================
+
+📍 현재 상황:
+- 내 PC IP: 192.168.2.190
+- MongoDB 포트: 27017
+- 설정 파일: C:\Program Files\MongoDB\Server\8.0\bin\mongod.cfg
+
+🛠️ 설정 변경 방법:
+
+1️⃣ 관리자 권한으로 메모장 실행
+   - 시작 메뉴에서 "메모장" 검색
+   - 우클릭 → "관리자 권한으로 실행"
+
+2️⃣ MongoDB 설정 파일 열기
+   - 파일 → 열기
+   - 경로: C:\Program Files\MongoDB\Server\8.0\bin\mongod.cfg
+
+3️⃣ bindIp 설정 변경
+   변경 전: bindIp: 127.0.0.1
+   변경 후: bindIp: 0.0.0.0    # 모든 IP 허용
+
+4️⃣ 파일 저장 (Ctrl+S)
+
+5️⃣ MongoDB 서비스 재시작
+   - 서비스 관리자 열기 (services.msc)
+   - "MongoDB" 서비스 찾기
+   - 우클릭 → "다시 시작"
+
+🌐 연결 문자열 변경:
+- MongoDB Compass에서
+- 변경 전: mongodb://localhost:27017/
+- 변경 후: mongodb://192.168.2.190:27017/
+
+🔒 보안 주의사항:
+- 0.0.0.0 설정은 모든 IP에서 접속 가능
+- 필요시 특정 IP만 허용: bindIp: 127.0.0.1,192.168.2.190
+- 방화벽에서 27017 포트 허용 필요
+
+🧪 테스트 방법:
+1. 다른 PC에서 MongoDB Compass 설치
+2. 연결 문자열: mongodb://192.168.2.190:27017/
+3. Connect 버튼 클릭

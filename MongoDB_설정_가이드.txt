@@ -1,0 +1,27 @@
+🗄️ MongoDB 연결 설정 가이드
+===============================================
+
+📁 파일 위치: simulator_config.json
+
+🔧 수정해야 할 부분:
+{
+  "database": {
+    "connection_string": "mongodb://localhost:27017/",  ← 여기 수정!
+    "database_name": "robot_data",
+    "collection_name": "robot_missions"
+  }
+}
+
+🌐 다른 PC의 MongoDB 연결 예시:
+1. 로컬 MongoDB (같은 PC): "mongodb://localhost:27017/"
+2. 다른 PC MongoDB: "mongodb://192.168.1.100:27017/"
+3. MongoDB Atlas (클라우드): "mongodb+srv://username:password@cluster.mongodb.net/"
+
+📝 수정 방법:
+1. simulator_config.json 파일을 메모장으로 열기
+2. "connection_string" 값을 새 MongoDB 주소로 변경
+3. 저장하고 서버 재시작
+
+✅ 연결 테스트:
+서버 시작 후 브라우저에서 http://localhost:8080/api/mongodb/health 접속
+→ "status": "healthy" 나오면 성공!

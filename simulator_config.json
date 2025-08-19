@@ -1,0 +1,136 @@
+{
+  "database": {
+    "connection_string": "mongodb://localhost:27017/",
+    "database_name": "robot_data",
+    "collection_name": "robot_missions"
+  },
+  "simulation": {
+    "robot_count": 30,
+    "mission_duration_min": 4,
+    "mission_duration_max": 10,
+    "time_grid_minutes": 10,
+    "data_points_min": 5,
+    "data_points_max": 10,
+    "strict_mode": false,
+    "normalized_storage": false,
+    "random_seed": null
+  },
+  "battery": {
+    "start_min": 70,
+    "start_max": 100,
+    "drain_min": 5,
+    "drain_max": 20
+  },
+  "scheduling": {
+    "mission_interval_minutes": 10
+  },
+  "locations": {
+    "sites": [
+      "H1",
+      "H2",
+      "H3",
+      "K1",
+      "K2",
+      "P1",
+      "P2",
+      "P3",
+      "P4"
+    ],
+    "lines": [
+      "1L",
+      "2L",
+      "3L",
+      "4L",
+      "5L",
+      "6L",
+      "7L",
+      "8L",
+      "9L",
+      "10L",
+      "11L",
+      "12L",
+      "13L",
+      "14L",
+      "15L",
+      "16L",
+      "17L",
+      "18L",
+      "19L"
+    ],
+    "floors": [
+      "1F",
+      "B1F",
+      "2F"
+    ],
+    "area": "GCB"
+  },
+  "sensor_ranges": {
+    "localization_score": [
+      70,
+      100
+    ],
+    "pos_x": [
+      1000,
+      20000
+    ],
+    "pos_y": [
+      1000,
+      20000
+    ],
+    "theta": [
+      0,
+      360
+    ],
+    "tilt_x": [
+      -1.0,
+      1.0
+    ],
+    "tilt_y": [
+      -1.0,
+      1.0
+    ],
+    "illuminance": [
+      500,
+      1000
+    ],
+    "noise": [
+      40,
+      70
+    ],
+    "temperature": [
+      20,
+      30
+    ],
+    "humidity": [
+      30,
+      60
+    ],
+    "NH3": [
+      0,
+      5
+    ],
+    "H2S": [
+      0,
+      2
+    ],
+    "VOCs": [
+      0,
+      10
+    ],
+    "F2": [
+      0,
+      0.1
+    ],
+    "HF": [
+      0,
+      0.5
+    ]
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "simulator.log",
+    "max_size_mb": 10,
+    "backup_count": 5,
+    "format": "%(asctime)s - %(levelname)s - %(message)s"
+  }
+}

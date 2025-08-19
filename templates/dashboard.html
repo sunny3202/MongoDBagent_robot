@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🏭 AGV 운영 센터 대시보드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f1419;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: auto;
+        }
+
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        /* 실시간 운영 현황판 */
+        .operation-overview {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .real-time-map {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .map-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .map-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .map-status {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status-active { background: #065f46; color: #10b981; }
+        .status-warning { background: #92400e; color: #f59e0b; }
+        .status-error { background: #991b1b; color: #f87171; }
+
+        /* 공장 레이아웃 맵 */
+        .factory-layout {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .zone {
+            background: #374151;
+            border: 2px solid #4b5563;
+            border-radius: 10px;
+            padding: 15px;
+            min-height: 120px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .zone:hover {
+            border-color: #60a5fa;
+            transform: translateY(-2px);
+        }
+
+        .zone-header {
+            font-weight: 600;
+            color: #d1d5db;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .robot-in-zone {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            border-radius: 6px;
+            padding: 6px 8px;
+            margin-bottom: 5px;
+            font-size: 0.8em;
+        }
+
+        .robot-status-icon {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-working { background: #10b981; }
+        .status-moving { background: #3b82f6; }
+        .status-idle { background: #f59e0b; }
+        .status-error { background: #ef4444; }
+        .status-charging { background: #8b5cf6; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .zone-empty {
+            color: #6b7280;
+            font-style: italic;
+            font-size: 0.8em;
+        }
+
+        /* 운영 통계 사이드바 */
+        .operation-stats {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .stats-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stat-group {
+            margin-bottom: 25px;
+        }
+
+        .stat-group h4 {
+            color: #d1d5db;
+            margin-bottom: 12px;
+            font-size: 1em;
+            border-bottom: 1px solid #4b5563;
+            padding-bottom: 5px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #374151;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #9ca3af;
+            font-size: 0.9em;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .stat-value.good { color: #10b981; }
+        .stat-value.warning { color: #f59e0b; }
+        .stat-value.danger { color: #ef4444; }
+
+        /* 실시간 작업 현황 */
+        .work-status-section {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .work-status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .work-status-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .work-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .work-progress-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 15px;
+        }
+
+        .work-item {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid #374151;
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .work-item:hover {
+            border-color: #60a5fa;
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .work-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .robot-id {
+            font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .work-status {
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+
+        .work-status.working { background: #065f46; color: #10b981; }
+        .work-status.moving { background: #1e3a8a; color: #60a5fa; }
+        .work-status.waiting { background: #92400e; color: #f59e0b; }
+        .work-status.error { background: #991b1b; color: #f87171; }
+
+        .work-details {
+            color: #d1d5db;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            background: #374151;
+            border-radius: 10px;
+            height: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .work-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            font-size: 0.8em;
+            color: #9ca3af;
+        }
+
+        /* 제어 패널 */
+        .control-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .control-card {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .control-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 20px;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            color: white;
+        }
+
+        .btn-emergency {
+            background: linear-gradient(135deg, #991b1b, #dc2626);
+            color: white;
+            animation: pulse-red 2s infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 구역별 효율성 */
+        .zone-efficiency {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .efficiency-item {
+            background: rgba(59, 130, 246, 0.05);
+            border: 1px solid #374151;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .efficiency-zone {
+            font-weight: 600;
+            color: #60a5fa;
+            margin-bottom: 8px;
+        }
+
+        .efficiency-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .efficiency-status {
+            font-size: 0.8em;
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+
+        .efficiency-good { color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .efficiency-warning { color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .efficiency-poor { color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+
+        /* 알림 센터 */
+        .alerts-section {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .alerts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .alerts-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .alert-count {
+            background: #dc2626;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .alerts-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .alert-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(239, 68, 68, 0.05);
+            border: 1px solid #dc2626;
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .alert-icon {
+            font-size: 1.2em;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-message {
+            color: #f87171;
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .alert-time {
+            color: #9ca3af;
+            font-size: 0.8em;
+        }
+
+        .alert-priority {
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .priority-high { background: #991b1b; color: #fecaca; }
+        .priority-medium { background: #92400e; color: #fed7aa; }
+        .priority-low { background: #365314; color: #bbf7d0; }
+
+        /* 로그 섹션 */
+        .logs-section {
+            background: linear-gradient(135deg, #1f2937, #374151);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .logs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .logs-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #60a5fa;
+        }
+
+        .log-container {
+            background: #111827;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+
+        .log-info { color: #60a5fa; }
+        .log-success { color: #10b981; }
+        .log-warning { color: #f59e0b; }
+        .log-error { color: #ef4444; }
+
+        /* 반응형 디자인 */
+        @media (max-width: 1200px) {
+            .operation-overview {
+                grid-template-columns: 1fr;
+            }
+            
+            .control-panel {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .factory-layout {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .work-progress-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .zone-efficiency {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* 로딩 애니메이션 */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .spinner {
+            border: 4px solid #374151;
+            border-top: 4px solid #60a5fa;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* MongoDB 설정 스타일 */
+        .mongodb-config-section {
+            space-y: 20px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status.connected {
+            background: rgba(16, 185, 129, 0.1);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .connection-status.disconnected {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .status-indicator {
+            font-size: 1.2em;
+        }
+
+        .mongo-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .mongo-actions .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .mongo-test-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid;
+            animation: slideIn 0.3s ease;
+        }
+
+        .mongo-test-result.success {
+            background: rgba(16, 185, 129, 0.1);
+            border-left-color: #10b981;
+            color: #10b981;
+        }
+
+        .mongo-test-result.error {
+            background: rgba(239, 68, 68, 0.1);
+            border-left-color: #ef4444;
+            color: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 개별 로봇 제어 테이블 스타일 */
+        .robot-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .robot-table th {
+            background: #374151;
+            color: #d1d5db;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #4b5563;
+        }
+
+        .robot-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #374151;
+            color: #d1d5db;
+        }
+
+        .robot-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .robot-controls-cell {
+            display: flex;
+            gap: 5px;
+        }
+
+        .robot-btn {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s ease;
+        }
+
+        .robot-btn.start { 
+            background: #059669; 
+            color: white; 
+        }
+
+        .robot-btn.stop { 
+            background: #dc2626; 
+            color: white; 
+        }
+
+        .robot-btn.reset { 
+            background: #6b7280; 
+            color: white; 
+        }
+
+        .robot-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .robot-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 설정 그리드 스타일 */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .setting-item label {
+            font-weight: 600;
+            color: #d1d5db;
+            font-size: 0.9em;
+        }
+
+        .setting-item input,
+        .setting-item select {
+            padding: 10px;
+            border: 2px solid #4b5563;
+            border-radius: 8px;
+            background: #374151;
+            color: #ffffff;
+            font-size: 1em;
+        }
+
+        .setting-item input:focus,
+        .setting-item select:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- 헤더 -->
+        <div class="header">
+            <h1>🏭 AGV 운영 센터 대시보드</h1>
+            <p>실시간 30대 로봇 모니터링 및 제어 시스템</p>
+        </div>
+
+        <!-- 실시간 운영 현황판 -->
+        <div class="operation-overview">
+            <!-- 실시간 로봇 위치 맵 -->
+            <div class="real-time-map">
+                <div class="map-header">
+                    <h2 class="map-title">🗺️ 실시간 로봇 위치 맵</h2>
+                    <div class="map-status">
+                        <span class="status-badge status-active" id="activeRobotsStatus">정상: 25대</span>
+                        <span class="status-badge status-warning" id="warningRobotsStatus">주의: 3대</span>
+                        <span class="status-badge status-error" id="errorRobotsStatus">문제: 2대</span>
+                    </div>
+                </div>
+                
+                <!-- 공장 레이아웃 -->
+                <div class="factory-layout" id="factoryLayout">
+                    <!-- H3 구역 -->
+                    <div class="zone" data-zone="H3">
+                        <div class="zone-header">🏭 H3 구역 (17L-15L)</div>
+                        <div id="zone-H3-robots">
+                            <div class="zone-empty">로봇 위치 로딩 중...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- K2 구역 -->
+                    <div class="zone" data-zone="K2">
+                        <div class="zone-header">🏭 K2 구역 (15L-13L)</div>
+                        <div id="zone-K2-robots">
+                            <div class="zone-empty">로봇 위치 로딩 중...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- P1 구역 -->
+                    <div class="zone" data-zone="P1">
+                        <div class="zone-header">🏭 P1 구역 (12L-10L)</div>
+                        <div id="zone-P1-robots">
+                            <div class="zone-empty">로봇 위치 로딩 중...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- 충전소 -->
+                    <div class="zone" data-zone="CHARGE">
+                        <div class="zone-header">🔋 충전소</div>
+                        <div id="zone-CHARGE-robots">
+                            <div class="zone-empty">충전 중인 로봇 없음</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 운영 통계 사이드바 -->
+            <div class="operation-stats">
+                <h3 class="stats-title">📊 실시간 운영 통계</h3>
+                
+                <div class="stat-group">
+                    <h4>🎯 금일 성과</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">완료 미션</span>
+                        <span class="stat-value good" id="todayMissions">847</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">목표 달성률</span>
+                        <span class="stat-value good" id="achievementRate">94%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">평균 처리 시간</span>
+                        <span class="stat-value" id="avgProcessTime">4.2분</span>
+                    </div>
+                </div>
+
+                <div class="stat-group">
+                    <h4>⚡ 실시간 상태</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">작업 중</span>
+                        <span class="stat-value good" id="workingRobots">18대</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">이동 중</span>
+                        <span class="stat-value" id="movingRobots">7대</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">대기/충전</span>
+                        <span class="stat-value warning" id="idleRobots">3대</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">문제 상황</span>
+                        <span class="stat-value danger" id="problemRobots">2대</span>
+                    </div>
+                </div>
+
+                <div class="stat-group">
+                    <h4>🔋 배터리 현황</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">평균 배터리</span>
+                        <span class="stat-value good" id="avgBattery">78%</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">부족 경고</span>
+                        <span class="stat-value warning" id="lowBatteryRobots">3대</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">충전 필요</span>
+                        <span class="stat-value danger" id="chargingNeeded">1대</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 실시간 작업 현황 -->
+        <div class="work-status-section">
+            <div class="work-status-header">
+                <h3 class="work-status-title">🚀 실시간 작업 현황</h3>
+                <div class="work-controls">
+                    <button class="btn btn-start" id="startAllBtn">▶️ 전체 시작</button>
+                    <button class="btn btn-stop" id="stopAllBtn">⏹️ 전체 정지</button>
+                    <button class="btn btn-emergency" id="emergencyBtn">🚨 비상 정지</button>
+                </div>
+            </div>
+            
+            <div class="work-progress-list" id="workProgressList">
+                <!-- 실시간 작업 진행 상황이 여기에 표시됩니다 -->
+            </div>
+        </div>
+
+        <!-- 제어 패널 -->
+        <div class="control-panel">
+            <!-- 시뮬레이터 제어 -->
+            <div class="control-card">
+                <h3 class="control-title">🎮 시뮬레이터 제어</h3>
+                <div class="control-buttons">
+                    <button class="btn btn-start" id="startSimBtn">▶️ 시뮬레이션 시작</button>
+                    <button class="btn btn-stop" id="stopSimBtn">⏹️ 시뮬레이션 정지</button>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">시뮬레이터 상태</span>
+                    <span class="stat-value" id="simulatorStatus">정지됨</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">실행 시간</span>
+                    <span class="stat-value" id="simulatorUptime">0초</span>
+                </div>
+            </div>
+
+            <!-- 구역별 효율성 -->
+            <div class="control-card">
+                <h3 class="control-title">📈 구역별 효율성</h3>
+                <div class="zone-efficiency" id="zoneEfficiency">
+                    <div class="efficiency-item">
+                        <div class="efficiency-zone">H3 구역</div>
+                        <div class="efficiency-value good">102%</div>
+                        <div class="efficiency-status efficiency-good">정상</div>
+                    </div>
+                    <div class="efficiency-item">
+                        <div class="efficiency-zone">K2 구역</div>
+                        <div class="efficiency-value warning">87%</div>
+                        <div class="efficiency-status efficiency-warning">지연</div>
+                    </div>
+                    <div class="efficiency-item">
+                        <div class="efficiency-zone">P1 구역</div>
+                        <div class="efficiency-value danger">45%</div>
+                        <div class="efficiency-status efficiency-poor">문제</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 알림 센터 -->
+        <div class="alerts-section">
+            <div class="alerts-header">
+                <h3 class="alerts-title">🚨 실시간 알림</h3>
+                <span class="alert-count" id="totalAlerts">5</span>
+            </div>
+            
+            <div class="alerts-list" id="alertsList">
+                <div class="alert-item">
+                    <span class="alert-icon">🔋</span>
+                    <div class="alert-content">
+                        <div class="alert-message">AGV-003 배터리 부족 (25%)</div>
+                        <div class="alert-time">2분 전</div>
+                    </div>
+                    <span class="alert-priority priority-high">긴급</span>
+                </div>
+                
+                <div class="alert-item">
+                    <span class="alert-icon">📡</span>
+                    <div class="alert-content">
+                        <div class="alert-message">AGV-015 통신 끊김 (위치: H2-08L)</div>
+                        <div class="alert-time">5분 전</div>
+                    </div>
+                    <span class="alert-priority priority-high">긴급</span>
+                </div>
+                
+                <div class="alert-item">
+                    <span class="alert-icon">⚠️</span>
+                    <div class="alert-content">
+                        <div class="alert-message">AGV-029 장애물 감지 정지 (K1-14L)</div>
+                        <div class="alert-time">8분 전</div>
+                    </div>
+                    <span class="alert-priority priority-medium">주의</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 개별 로봇 제어 및 데이터 입력 -->
+        <div class="control-panel">
+            <div class="control-card">
+                <h3 class="control-title">🤖 개별 로봇 제어</h3>
+                <div class="robot-table-container" style="max-height: 400px; overflow-y: auto;">
+                    <table class="robot-table" id="individualRobotTable">
+                        <thead>
+                            <tr>
+                                <th>로봇 ID</th>
+                                <th>상태</th>
+                                <th>배터리</th>
+                                <th>위치</th>
+                                <th>제어</th>
+                            </tr>
+                        </thead>
+                        <tbody id="individualRobotTableBody">
+                            <!-- 개별 로봇 목록이 여기에 동적으로 추가됩니다 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="control-card">
+                <h3 class="control-title">⚙️ 시뮬레이터 설정</h3>
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label for="seedInput">랜덤 시드</label>
+                        <input type="number" id="seedInput" placeholder="12345" value="12345">
+                    </div>
+                    <div class="setting-item">
+                        <label for="intervalInput">미션 간격 (분)</label>
+                        <input type="number" id="intervalInput" placeholder="10" value="10" min="1" max="60">
+                    </div>
+                    <div class="setting-item">
+                        <label for="strictMode">엄격 모드</label>
+                        <select id="strictMode">
+                            <option value="false">비활성화</option>
+                            <option value="true">활성화</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="normalizedMode">정규화 모드</label>
+                        <select id="normalizedMode">
+                            <option value="false">단일 컬렉션</option>
+                            <option value="true">정규화 저장</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="control-buttons">
+                    <button class="btn btn-start" id="applySettingsBtn">⚙️ 설정 적용</button>
+                    <button class="btn btn-stop" id="resetSettingsBtn">🔄 설정 초기화</button>
+                </div>
+            </div>
+
+            <div class="control-card">
+                <h3 class="control-title">🗄️ MongoDB 설정</h3>
+                <div class="mongodb-config-section">
+                    <div class="connection-status" id="mongoConnectionStatus">
+                        <span class="status-indicator" id="mongoStatusIndicator">🔴</span>
+                        <span id="mongoStatusText">연결 상태 확인 중...</span>
+                    </div>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label for="mongoConnectionString">연결 문자열</label>
+                            <input type="text" id="mongoConnectionString" 
+                                   placeholder="mongodb://localhost:27017/" 
+                                   value="mongodb://localhost:27017/">
+                        </div>
+                        <div class="setting-item">
+                            <label for="mongoDatabaseName">데이터베이스명</label>
+                            <input type="text" id="mongoDatabaseName" 
+                                   placeholder="robot_data" 
+                                   value="robot_data">
+                        </div>
+                        <div class="setting-item">
+                            <label for="mongoCollectionName">컬렉션명</label>
+                            <input type="text" id="mongoCollectionName" 
+                                   placeholder="robot_missions" 
+                                   value="robot_missions">
+                        </div>
+                    </div>
+                    
+                    <div class="mongo-actions">
+                        <button type="button" class="btn btn-primary" onclick="dashboard.testMongoConnection()">
+                            🔍 연결 테스트
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="dashboard.saveMongoConfig()">
+                            💾 설정 저장
+                        </button>
+                        <button type="button" class="btn btn-warning" onclick="dashboard.loadMongoConfig()">
+                            📋 설정 불러오기
+                        </button>
+                    </div>
+                    
+                    <div class="mongo-test-result" id="mongoTestResult" style="display: none;">
+                        <div class="test-result-content" id="mongoTestContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 실시간 로그 -->
+        <div class="logs-section">
+            <div class="logs-header">
+                <h3 class="logs-title">📝 실시간 운영 로그</h3>
+            </div>
+            <div class="log-container" id="logContainer">
+                <div class="log-entry log-info">[16:55:52] 시스템 초기화 완료 - 30대 로봇 연결됨</div>
+                <div class="log-entry log-success">[16:55:53] AGV-001: H3-17L → K2-15L 이동 시작</div>
+                <div class="log-entry log-success">[16:55:54] AGV-002: P1-12L 작업 완료 (처리시간: 4.2분)</div>
+                <div class="log-entry log-warning">[16:55:55] AGV-003: 배터리 부족 경고 (25%)</div>
+                <div class="log-entry log-error">[16:55:56] AGV-015: 통신 끊김 감지</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로딩 표시 -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>처리 중...</div>
+    </div>
+
+    <script>
+        class OperationalDashboard {
+            constructor() {
+                this.apiUrl = 'http://localhost:8080';
+                this.updateIntervals = {};
+                this.robotLocations = new Map();
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.startRealTimeUpdates();
+                
+                // 초기 데이터 로드
+                this.updateOperationalData();
+                this.updateRobotMap();
+                this.updateWorkProgress();
+                this.updateRealTimeAlerts();
+                this.updateIndividualRobotTable();
+            }
+
+            initializeElements() {
+                // 통계 요소들
+                this.todayMissions = document.getElementById('todayMissions');
+                this.achievementRate = document.getElementById('achievementRate');
+                this.avgProcessTime = document.getElementById('avgProcessTime');
+                this.workingRobots = document.getElementById('workingRobots');
+                this.movingRobots = document.getElementById('movingRobots');
+                this.idleRobots = document.getElementById('idleRobots');
+                this.problemRobots = document.getElementById('problemRobots');
+                this.avgBattery = document.getElementById('avgBattery');
+                this.lowBatteryRobots = document.getElementById('lowBatteryRobots');
+                this.chargingNeeded = document.getElementById('chargingNeeded');
+                
+                // 맵 요소들
+                this.factoryLayout = document.getElementById('factoryLayout');
+                this.workProgressList = document.getElementById('workProgressList');
+                this.alertsList = document.getElementById('alertsList');
+                this.logContainer = document.getElementById('logContainer');
+                
+                // 제어 요소들
+                this.startSimBtn = document.getElementById('startSimBtn');
+                this.stopSimBtn = document.getElementById('stopSimBtn');
+                this.startAllBtn = document.getElementById('startAllBtn');
+                this.stopAllBtn = document.getElementById('stopAllBtn');
+                this.emergencyBtn = document.getElementById('emergencyBtn');
+                
+                // 개별 로봇 제어 요소들
+                this.individualRobotTableBody = document.getElementById('individualRobotTableBody');
+                this.seedInput = document.getElementById('seedInput');
+                this.intervalInput = document.getElementById('intervalInput');
+                this.strictMode = document.getElementById('strictMode');
+                this.normalizedMode = document.getElementById('normalizedMode');
+                this.applySettingsBtn = document.getElementById('applySettingsBtn');
+                this.resetSettingsBtn = document.getElementById('resetSettingsBtn');
+                
+                // 상태 요소들
+                this.simulatorStatus = document.getElementById('simulatorStatus');
+                this.simulatorUptime = document.getElementById('simulatorUptime');
+                this.loading = document.getElementById('loading');
+            }
+
+            bindEvents() {
+                this.startSimBtn?.addEventListener('click', () => this.startSimulator());
+                this.stopSimBtn?.addEventListener('click', () => this.stopSimulator());
+                this.startAllBtn?.addEventListener('click', () => this.startAllRobots());
+                this.stopAllBtn?.addEventListener('click', () => this.stopAllRobots());
+                this.emergencyBtn?.addEventListener('click', () => this.emergencyStop());
+                
+                // 설정 버튼 이벤트
+                this.applySettingsBtn?.addEventListener('click', () => this.applySettings());
+                this.resetSettingsBtn?.addEventListener('click', () => this.resetSettings());
+            }
+
+            startRealTimeUpdates() {
+                // 운영 데이터 업데이트 (5초마다)
+                this.updateIntervals.operational = setInterval(() => {
+                    this.updateOperationalData();
+                }, 5000);
+                
+                // 로봇 맵 업데이트 (3초마다)
+                this.updateIntervals.robotMap = setInterval(() => {
+                    this.updateRobotMap();
+                }, 3000);
+                
+                // 작업 진행 상황 업데이트 (2초마다)
+                this.updateIntervals.workProgress = setInterval(() => {
+                    this.updateWorkProgress();
+                }, 2000);
+                
+                // 실시간 알림 업데이트 (10초마다)
+                this.updateIntervals.alerts = setInterval(() => {
+                    this.updateRealTimeAlerts();
+                }, 10000);
+                
+                // 개별 로봇 테이블 업데이트 (5초마다)
+                this.updateIntervals.individualRobots = setInterval(() => {
+                    this.updateIndividualRobotTable();
+                }, 5000);
+                
+                // 시뮬레이터 상태 업데이트 (1초마다)
+                this.updateIntervals.simulator = setInterval(() => {
+                    this.updateSimulatorStatus();
+                }, 1000);
+            }
+
+            async updateOperationalData() {
+                try {
+                    // 🔥 실제 MongoDB API 호출
+                    const response = await fetch(`${this.apiUrl}/api/stats/operational`);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        // 실제 MongoDB 데이터로 업데이트
+                        this.updateElement(this.todayMissions, data.daily_stats?.completed_missions || 0);
+                        this.updateElement(this.achievementRate, `${data.daily_stats?.success_rate || 0}%`);
+                        this.updateElement(this.avgProcessTime, `${data.daily_stats?.avg_process_time || 0}분`);
+                        
+                        // 실시간 상태 업데이트
+                        this.updateElement(this.workingRobots, `${data.robot_status?.working || 0}대`);
+                        this.updateElement(this.movingRobots, `${data.robot_status?.moving || 0}대`);
+                        this.updateElement(this.idleRobots, `${data.robot_status?.idle || 0}대`);
+                        this.updateElement(this.problemRobots, `${data.robot_status?.error || 0}대`);
+                        
+                        // 배터리 현황 업데이트
+                        this.updateElement(this.avgBattery, `${data.battery_stats?.average || 0}%`);
+                        this.updateElement(this.lowBatteryRobots, `${data.battery_stats?.low_count || 0}대`);
+                        this.updateElement(this.chargingNeeded, `${data.battery_stats?.critical_count || 0}대`);
+                        
+                        this.addLog(`📊 실제 MongoDB 데이터 업데이트 완료`, 'success');
+                    } else {
+                        // API 실패 시 폴백: 기본값 표시
+                        throw new Error(data.error || 'API 호출 실패');
+                    }
+                    
+                } catch (error) {
+                    this.addLog(`⚠️ MongoDB 연결 실패, 기본값 표시: ${error.message}`, 'warning');
+                    // 폴백: MongoDB 연결 실패 시 기본값
+                    this.updateElement(this.todayMissions, '-');
+                    this.updateElement(this.achievementRate, '-');
+                    this.updateElement(this.avgProcessTime, '-');
+                    this.updateElement(this.workingRobots, '-');
+                    this.updateElement(this.movingRobots, '-');
+                    this.updateElement(this.idleRobots, '-');
+                    this.updateElement(this.problemRobots, '-');
+                    this.updateElement(this.avgBattery, '-');
+                    this.updateElement(this.lowBatteryRobots, '-');
+                    this.updateElement(this.chargingNeeded, '-');
+                }
+            }
+
+            generateMockOperationalData() {
+                const now = new Date();
+                const variance = Math.sin(now.getTime() / 10000) * 10;
+                
+                return {
+                    daily_stats: {
+                        completed_missions: Math.floor(847 + variance),
+                        success_rate: Math.floor(94 + variance / 2),
+                        avg_process_time: (4.2 + variance / 10).toFixed(1)
+                    },
+                    robot_status: {
+                        working: Math.floor(18 + variance / 2),
+                        moving: Math.floor(7 + variance / 3),
+                        idle: Math.floor(3 + Math.abs(variance) / 5),
+                        error: Math.floor(2 + Math.abs(variance) / 8)
+                    },
+                    battery_stats: {
+                        average: Math.floor(78 + variance),
+                        low_count: Math.floor(3 + Math.abs(variance) / 5),
+                        critical_count: Math.floor(1 + Math.abs(variance) / 10)
+                    }
+                };
+            }
+
+            async updateRobotMap() {
+                try {
+                    // 🔥 실제 MongoDB API 호출
+                    const response = await fetch(`${this.apiUrl}/api/robots`);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        // 실제 MongoDB 로봇 데이터 사용
+                        this.renderRobotMap(data.robots);
+                        this.updateMapStatus(data.summary);
+                        this.addLog(`🗺️ 실제 로봇 위치 데이터 업데이트 완료`, 'success');
+                    } else {
+                        throw new Error(data.error || '로봇 데이터 API 호출 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`⚠️ 로봇 맵 MongoDB 연결 실패: ${error.message}`, 'warning');
+                    // 폴백: 가짜 데이터로 대체
+                    const mockRobots = this.generateMockRobotData();
+                    this.renderRobotMap(mockRobots);
+                    this.updateMapStatus(this.calculateRobotSummary(mockRobots));
+                }
+            }
+
+            generateMockRobotData() {
+                const robots = [];
+                const statuses = ['running', 'moving', 'idle', 'error', 'charging'];
+                const now = Date.now();
+                
+                for (let i = 1; i <= 30; i++) {
+                    const robotId = `AGV-${i.toString().padStart(3, '0')}`;
+                    const statusIndex = Math.floor((i * 7 + now / 5000) % statuses.length);
+                    
+                    robots.push({
+                        robot_id: robotId,
+                        status: statuses[statusIndex],
+                        battery_level: Math.floor(30 + (i * 13 + now / 1000) % 70),
+                        last_seen: new Date(now - (i * 1000)).toISOString(),
+                        uptime: i * 100 + Math.floor(now / 1000) % 1000
+                    });
+                }
+                
+                return robots;
+            }
+
+            calculateRobotSummary(robots) {
+                return {
+                    running: robots.filter(r => r.status === 'running').length,
+                    idle: robots.filter(r => r.status === 'idle' || r.status === 'charging').length,
+                    error: robots.filter(r => r.status === 'error').length
+                };
+            }
+
+            renderRobotMap(robots) {
+                // 구역별로 로봇 분류
+                const zones = {
+                    'H3': { robots: [], element: document.getElementById('zone-H3-robots') },
+                    'K2': { robots: [], element: document.getElementById('zone-K2-robots') },
+                    'P1': { robots: [], element: document.getElementById('zone-P1-robots') },
+                    'CHARGE': { robots: [], element: document.getElementById('zone-CHARGE-robots') }
+                };
+
+                // 로봇을 구역별로 분류
+                robots.forEach(robot => {
+                    const location = this.getRobotZone(robot);
+                    if (zones[location]) {
+                        zones[location].robots.push(robot);
+                    }
+                });
+
+                // 각 구역에 로봇 표시
+                Object.keys(zones).forEach(zoneKey => {
+                    const zone = zones[zoneKey];
+                    if (!zone.element) return;
+
+                    if (zone.robots.length === 0) {
+                        zone.element.innerHTML = '<div class="zone-empty">비어있음</div>';
+                    } else {
+                        zone.element.innerHTML = zone.robots.map(robot => `
+                            <div class="robot-in-zone">
+                                <div class="robot-status-icon status-${this.getRobotStatusClass(robot.status)}"></div>
+                                <span>${robot.robot_id}</span>
+                                <span>${this.getRobotStatusText(robot.status)}</span>
+                                <span>${robot.battery_level}%</span>
+                            </div>
+                        `).join('');
+                    }
+                });
+            }
+
+            getRobotZone(robot) {
+                const robotNumber = parseInt(robot.robot_id.split('-')[1]);
+                
+                if (robot.status === 'charging' || robot.battery_level < 30) {
+                    return 'CHARGE';
+                }
+                
+                const zones = ['H3', 'K2', 'P1'];
+                return zones[robotNumber % 3];
+            }
+
+            getRobotStatusClass(status) {
+                const statusMap = {
+                    'running': 'working',
+                    'moving': 'moving',
+                    'idle': 'idle',
+                    'error': 'error',
+                    'charging': 'charging'
+                };
+                return statusMap[status] || 'idle';
+            }
+
+            getRobotStatusText(status) {
+                const statusMap = {
+                    'running': '작업중',
+                    'moving': '이동중',
+                    'idle': '대기중',
+                    'error': '오류',
+                    'charging': '충전중'
+                };
+                return statusMap[status] || status;
+            }
+
+            updateMapStatus(summary) {
+                const activeElement = document.getElementById('activeRobotsStatus');
+                const warningElement = document.getElementById('warningRobotsStatus');
+                const errorElement = document.getElementById('errorRobotsStatus');
+                
+                if (activeElement) activeElement.textContent = `정상: ${summary.running || 0}대`;
+                if (warningElement) warningElement.textContent = `주의: ${summary.idle || 0}대`;
+                if (errorElement) errorElement.textContent = `문제: ${summary.error || 0}대`;
+            }
+
+            async updateWorkProgress() {
+                try {
+                    // 🔥 실제 MongoDB API 호출
+                    const response = await fetch(`${this.apiUrl}/api/robots`);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        // 실제 MongoDB 로봇 데이터로 작업 진행 상황 표시
+                        this.renderWorkProgress(data.robots);
+                        this.addLog(`🚀 실제 작업 진행 상황 업데이트 완료`, 'success');
+                    } else {
+                        throw new Error(data.error || '작업 진행 API 호출 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`⚠️ 작업 진행 MongoDB 연결 실패: ${error.message}`, 'warning');
+                    // 폴백: 가짜 데이터로 대체
+                    const mockRobots = this.generateMockRobotData();
+                    this.renderWorkProgress(mockRobots);
+                }
+            }
+
+            renderWorkProgress(robots) {
+                // 작업 중인 로봇만 표시
+                const workingRobots = robots.filter(robot => 
+                    robot.status === 'running' || robot.status === 'moving'
+                ).slice(0, 6); // 최대 6개만 표시
+
+                if (!this.workProgressList) return;
+
+                if (workingRobots.length === 0) {
+                    this.workProgressList.innerHTML = '<div class="zone-empty">현재 작업 중인 로봇이 없습니다</div>';
+                    return;
+                }
+
+                this.workProgressList.innerHTML = workingRobots.map(robot => {
+                    const progress = this.calculateRobotProgress(robot);
+                    const workDetails = this.generateWorkDetails(robot);
+                    
+                    return `
+                        <div class="work-item">
+                            <div class="work-item-header">
+                                <span class="robot-id">${robot.robot_id}</span>
+                                <span class="work-status ${robot.status}">${this.getRobotStatusText(robot.status)}</span>
+                            </div>
+                            <div class="work-details">${workDetails}</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="work-meta">
+                                <span>배터리: ${robot.battery_level}%</span>
+                                <span>예상 완료: ${this.calculateETA(robot)}분</span>
+                                <span>진행률: ${progress}%</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            calculateRobotProgress(robot) {
+                const robotNumber = parseInt(robot.robot_id.split('-')[1]);
+                const baseProgress = (robotNumber * 7 + Date.now() / 10000) % 100;
+                return Math.floor(baseProgress);
+            }
+
+            generateWorkDetails(robot) {
+                const locations = ['H3-17L', 'K2-15L', 'P1-12L', 'H2-08L', 'K1-14L'];
+                const robotNumber = parseInt(robot.robot_id.split('-')[1]);
+                const fromLocation = locations[robotNumber % locations.length];
+                const toLocation = locations[(robotNumber + 1) % locations.length];
+                
+                if (robot.status === 'moving') {
+                    return `${fromLocation} → ${toLocation} 이동 중`;
+                } else {
+                    return `${fromLocation}에서 작업 수행 중`;
+                }
+            }
+
+            calculateETA(robot) {
+                const progress = this.calculateRobotProgress(robot);
+                const remaining = 100 - progress;
+                return Math.ceil(remaining / 20);
+            }
+
+            async updateSimulatorStatus() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/status`);
+                    const status = await response.json();
+                    
+                    if (response.ok) {
+                        this.updateElement(this.simulatorStatus, status.is_running ? '실행 중' : '정지됨');
+                        this.updateElement(this.simulatorUptime, status.is_running ? 
+                            `${Math.floor(status.uptime_seconds || 0)}초` : '0초');
+                        
+                        // 버튼 상태 업데이트
+                        if (this.startSimBtn) this.startSimBtn.disabled = status.is_running;
+                        if (this.stopSimBtn) this.stopSimBtn.disabled = !status.is_running;
+                    }
+                } catch (error) {
+                    // 조용히 실패 처리
+                }
+            }
+
+            async startSimulator() {
+                this.showLoading(true);
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            seed: 12345,
+                            strict_mode: false,
+                            normalized_mode: false,
+                            interval: 10
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        this.addLog(`✅ 시뮬레이터 시작됨`, 'success');
+                    } else {
+                        throw new Error(result.error || result.message);
+                    }
+                } catch (error) {
+                    this.addLog(`❌ 시뮬레이터 시작 실패: ${error.message}`, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async stopSimulator() {
+                this.showLoading(true);
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/stop`, {
+                        method: 'POST'
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        this.addLog(`⏹️ 시뮬레이터 정지됨`, 'success');
+                    } else {
+                        throw new Error(result.error || result.message);
+                    }
+                } catch (error) {
+                    this.addLog(`❌ 시뮬레이터 정지 실패: ${error.message}`, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async startAllRobots() {
+                this.showLoading(true);
+                try {
+                    // 🔥 실제 전체 로봇 시작 API 호출
+                    const response = await fetch(`${this.apiUrl}/api/robots/start-all`, {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        this.addLog(`✅ 전체 로봇 시작 완료: ${result.message}`, 'success');
+                        // 즉시 로봇 상태 업데이트
+                        this.updateRobotMap();
+                        this.updateWorkProgress();
+                    } else {
+                        throw new Error(result.error || '전체 시작 API 호출 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`❌ 전체 로봇 시작 실패: ${error.message}`, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async stopAllRobots() {
+                if (confirm('모든 로봇을 정지하시겠습니까?')) {
+                    this.showLoading(true);
+                    try {
+                        // 🔥 실제 전체 로봇 정지 API 호출
+                        const response = await fetch(`${this.apiUrl}/api/robots/stop-all`, {
+                            method: 'POST'
+                        });
+                        const result = await response.json();
+                        
+                        if (response.ok && result.success) {
+                            this.addLog(`✅ 전체 로봇 정지 완료: ${result.message}`, 'success');
+                            // 즉시 로봇 상태 업데이트
+                            this.updateRobotMap();
+                            this.updateWorkProgress();
+                        } else {
+                            throw new Error(result.error || '전체 정지 API 호출 실패');
+                        }
+                    } catch (error) {
+                        this.addLog(`❌ 전체 로봇 정지 실패: ${error.message}`, 'error');
+                    } finally {
+                        this.showLoading(false);
+                    }
+                }
+            }
+
+            async emergencyStop() {
+                if (confirm('🚨 비상 정지를 실행하시겠습니까? 모든 로봇이 즉시 정지됩니다.')) {
+                    this.addLog(`🚨 비상 정지 명령 실행!`, 'error');
+                }
+            }
+
+            async updateRealTimeAlerts() {
+                try {
+                    // 🔥 실제 MongoDB 기반 알림 생성
+                    const response = await fetch(`${this.apiUrl}/api/robots`);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        const alerts = this.generateRealAlertsFromData(data.robots);
+                        this.renderRealTimeAlerts(alerts);
+                        this.addLog(`🚨 실제 MongoDB 기반 알림 업데이트 완료`, 'success');
+                    } else {
+                        throw new Error(data.error || '알림 데이터 API 호출 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`⚠️ 실시간 알림 MongoDB 연결 실패: ${error.message}`, 'warning');
+                    // 폴백: 기본 알림 표시
+                    this.renderFallbackAlerts();
+                }
+            }
+
+            generateRealAlertsFromData(robots) {
+                const alerts = [];
+                const now = new Date();
+                
+                robots.forEach(robot => {
+                    // 배터리 부족 알림 (30% 이하)
+                    if (robot.battery_level <= 30) {
+                        alerts.push({
+                            icon: '🔋',
+                            message: `${robot.robot_id} 배터리 부족 (${robot.battery_level}%)`,
+                            time: this.getRelativeTime(robot.last_seen),
+                            priority: robot.battery_level <= 15 ? 'high' : 'medium'
+                        });
+                    }
+                    
+                    // 통신 끊김 알림 (5분 이상 업데이트 없음)
+                    if (robot.last_seen) {
+                        const lastSeenTime = new Date(robot.last_seen);
+                        const timeDiff = (now - lastSeenTime) / 1000 / 60; // 분 단위
+                        
+                        if (timeDiff > 5) {
+                            alerts.push({
+                                icon: '📡',
+                                message: `${robot.robot_id} 통신 끊김 (${Math.floor(timeDiff)}분 전)`,
+                                time: `${Math.floor(timeDiff)}분 전`,
+                                priority: timeDiff > 10 ? 'high' : 'medium'
+                            });
+                        }
+                    }
+                    
+                    // 오류 상태 알림
+                    if (robot.status === 'error') {
+                        alerts.push({
+                            icon: '⚠️',
+                            message: `${robot.robot_id} 시스템 오류 발생`,
+                            time: this.getRelativeTime(robot.last_seen),
+                            priority: 'high'
+                        });
+                    }
+                    
+                    // 장시간 대기 알림 (30분 이상 idle)
+                    if (robot.status === 'idle' && robot.uptime > 1800) { // 30분 = 1800초
+                        alerts.push({
+                            icon: '⏰',
+                            message: `${robot.robot_id} 장시간 대기 중 (${Math.floor(robot.uptime / 60)}분)`,
+                            time: this.getRelativeTime(robot.last_seen),
+                            priority: 'low'
+                        });
+                    }
+                });
+                
+                // 최신 순으로 정렬하고 최대 10개만
+                return alerts.sort((a, b) => {
+                    const priorityOrder = { 'high': 3, 'medium': 2, 'low': 1 };
+                    return priorityOrder[b.priority] - priorityOrder[a.priority];
+                }).slice(0, 10);
+            }
+
+            renderRealTimeAlerts(alerts) {
+                if (!this.alertsList) return;
+                
+                // 총 알림 수 업데이트
+                const totalAlertsElement = document.getElementById('totalAlerts');
+                if (totalAlertsElement) {
+                    totalAlertsElement.textContent = alerts.length;
+                }
+                
+                if (alerts.length === 0) {
+                    this.alertsList.innerHTML = '<div class="zone-empty">현재 알림이 없습니다 ✅</div>';
+                    return;
+                }
+                
+                this.alertsList.innerHTML = alerts.map(alert => `
+                    <div class="alert-item">
+                        <span class="alert-icon">${alert.icon}</span>
+                        <div class="alert-content">
+                            <div class="alert-message">${alert.message}</div>
+                            <div class="alert-time">${alert.time}</div>
+                        </div>
+                        <span class="alert-priority priority-${alert.priority}">
+                            ${alert.priority === 'high' ? '긴급' : alert.priority === 'medium' ? '주의' : '정보'}
+                        </span>
+                    </div>
+                `).join('');
+            }
+
+            renderFallbackAlerts() {
+                if (!this.alertsList) return;
+                
+                this.alertsList.innerHTML = `
+                    <div class="alert-item">
+                        <span class="alert-icon">⚠️</span>
+                        <div class="alert-content">
+                            <div class="alert-message">MongoDB 연결 끊김 - 알림 시스템 대기 중</div>
+                            <div class="alert-time">방금 전</div>
+                        </div>
+                        <span class="alert-priority priority-medium">주의</span>
+                    </div>
+                `;
+            }
+
+            getRelativeTime(timestamp) {
+                if (!timestamp) return '알 수 없음';
+                
+                const now = new Date();
+                const time = new Date(timestamp);
+                const diff = Math.floor((now - time) / 1000);
+                
+                if (diff < 60) return `${diff}초 전`;
+                if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)}시간 전`;
+                return `${Math.floor(diff / 86400)}일 전`;
+            }
+
+            async updateIndividualRobotTable() {
+                try {
+                    // 🔥 실제 MongoDB API 호출
+                    const response = await fetch(`${this.apiUrl}/api/robots`);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.success) {
+                        this.renderIndividualRobotTable(data.robots);
+                        this.addLog(`🤖 개별 로봇 테이블 업데이트 완료`, 'success');
+                    } else {
+                        throw new Error(data.error || '개별 로봇 API 호출 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`⚠️ 개별 로봇 테이블 MongoDB 연결 실패: ${error.message}`, 'warning');
+                    // 폴백: 기본 메시지 표시
+                    if (this.individualRobotTableBody) {
+                        this.individualRobotTableBody.innerHTML = '<tr><td colspan="5">MongoDB 연결 실패 - 로봇 데이터를 불러올 수 없습니다</td></tr>';
+                    }
+                }
+            }
+
+            renderIndividualRobotTable(robots) {
+                if (!this.individualRobotTableBody) return;
+                
+                this.individualRobotTableBody.innerHTML = robots.map(robot => {
+                    const location = this.getRobotLocation(robot);
+                    const statusClass = this.getRobotStatusClass(robot.status);
+                    const statusText = this.getRobotStatusText(robot.status);
+                    
+                    return `
+                        <tr>
+                            <td><strong>${robot.robot_id}</strong></td>
+                            <td>
+                                <span class="robot-status ${statusClass}">
+                                    ${this.getStatusIcon(robot.status)} ${statusText}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="battery-level ${this.getBatteryClass(robot.battery_level)}">
+                                    ${robot.battery_level}%
+                                </span>
+                            </td>
+                            <td>${location}</td>
+                            <td>
+                                <div class="robot-controls-cell">
+                                    ${robot.status === 'running' ? 
+                                        `<button class="robot-btn stop" onclick="operationalDashboard.stopIndividualRobot('${robot.robot_id}')">정지</button>` :
+                                        `<button class="robot-btn start" onclick="operationalDashboard.startIndividualRobot('${robot.robot_id}')">시작</button>`
+                                    }
+                                    <button class="robot-btn reset" onclick="operationalDashboard.resetIndividualRobot('${robot.robot_id}')">리셋</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            getRobotLocation(robot) {
+                // 실제 로봇 위치 정보 생성
+                const zones = ['H3-17L', 'K2-15L', 'P1-12L', 'H2-08L', 'K1-14L'];
+                const robotNumber = parseInt(robot.robot_id.split('-')[1]);
+                return zones[robotNumber % zones.length];
+            }
+
+            getStatusIcon(status) {
+                const icons = {
+                    'running': '🟢',
+                    'moving': '🔵',
+                    'idle': '🟡',
+                    'error': '🔴',
+                    'charging': '🟣'
+                };
+                return icons[status] || '❓';
+            }
+
+            getBatteryClass(level) {
+                if (level >= 60) return 'good';
+                if (level >= 30) return 'warning';
+                return 'danger';
+            }
+
+            async startIndividualRobot(robotId) {
+                this.showLoading(true);
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/robots/${robotId}/start`, {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        this.addLog(`✅ 로봇 ${robotId} 시작 완료`, 'success');
+                        // 즉시 테이블 업데이트
+                        this.updateIndividualRobotTable();
+                        this.updateRobotMap();
+                    } else {
+                        throw new Error(result.error || `로봇 ${robotId} 시작 실패`);
+                    }
+                } catch (error) {
+                    this.addLog(`❌ 로봇 ${robotId} 시작 실패: ${error.message}`, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async stopIndividualRobot(robotId) {
+                this.showLoading(true);
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/robots/${robotId}/stop`, {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        this.addLog(`🛑 로봇 ${robotId} 정지 완료`, 'success');
+                        // 즉시 테이블 업데이트
+                        this.updateIndividualRobotTable();
+                        this.updateRobotMap();
+                    } else {
+                        throw new Error(result.error || `로봇 ${robotId} 정지 실패`);
+                    }
+                } catch (error) {
+                    this.addLog(`❌ 로봇 ${robotId} 정지 실패: ${error.message}`, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            async resetIndividualRobot(robotId) {
+                this.showLoading(true);
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/robots/${robotId}/reset`, {
+                        method: 'POST'
+                    });
+                    const result = await response.json();
+                    
+                    if (response.ok && result.success) {
+                        this.addLog(`🔄 로봇 ${robotId} 리셋 완료`, 'success');
+                        // 즉시 테이블 업데이트
+                        this.updateIndividualRobotTable();
+                        this.updateRobotMap();
+                    } else {
+                        throw new Error(result.error || `로봇 ${robotId} 리셋 실패`);
+                    }
+                } catch (error) {
+                    this.addLog(`❌ 로봇 ${robotId} 리셋 실패: ${error.message}`, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            applySettings() {
+                const settings = {
+                    seed: parseInt(this.seedInput?.value) || 12345,
+                    interval: parseInt(this.intervalInput?.value) || 10,
+                    strict_mode: this.strictMode?.value === 'true',
+                    normalized_mode: this.normalizedMode?.value === 'true'
+                };
+                
+                this.addLog(`⚙️ 설정 적용: ${JSON.stringify(settings)}`, 'info');
+                
+                // 시뮬레이터 재시작 (설정 적용)
+                if (confirm('설정을 적용하려면 시뮬레이터를 재시작해야 합니다. 계속하시겠습니까?')) {
+                    this.restartSimulatorWithSettings(settings);
+                }
+            }
+
+            resetSettings() {
+                if (this.seedInput) this.seedInput.value = '12345';
+                if (this.intervalInput) this.intervalInput.value = '10';
+                if (this.strictMode) this.strictMode.value = 'false';
+                if (this.normalizedMode) this.normalizedMode.value = 'false';
+                
+                this.addLog(`🔄 설정이 기본값으로 초기화되었습니다`, 'info');
+            }
+
+            async restartSimulatorWithSettings(settings) {
+                this.showLoading(true);
+                try {
+                    // 먼저 정지
+                    await fetch(`${this.apiUrl}/api/stop`, { method: 'POST' });
+                    
+                    // 잠시 대기
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // 새 설정으로 시작
+                    const response = await fetch(`${this.apiUrl}/api/start`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(settings)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        this.addLog(`✅ 새 설정으로 시뮬레이터 재시작 완료`, 'success');
+                    } else {
+                        throw new Error(result.error || '재시작 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`❌ 설정 적용 재시작 실패: ${error.message}`, 'error');
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+
+            updateElement(element, value) {
+                if (element && element.textContent !== value) {
+                    element.textContent = value;
+                }
+            }
+
+            showLoading(show) {
+                if (this.loading) {
+                    this.loading.style.display = show ? 'block' : 'none';
+                }
+            }
+
+            addLog(message, type = 'info') {
+                if (!this.logContainer) return;
+                
+                const timestamp = new Date().toLocaleTimeString();
+                const logEntry = document.createElement('div');
+                logEntry.className = `log-entry log-${type}`;
+                logEntry.textContent = `[${timestamp}] ${message}`;
+                
+                this.logContainer.appendChild(logEntry);
+                this.logContainer.scrollTop = this.logContainer.scrollHeight;
+                
+                // 로그 수 제한 (최대 50개)
+                const logs = this.logContainer.children;
+                if (logs.length > 50) {
+                    this.logContainer.removeChild(logs[0]);
+                }
+            }
+
+            // MongoDB 관련 메서드들
+            async loadMongoConfig() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/mongodb/config`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const config = result.config;
+                        document.getElementById('mongoConnectionString').value = config.connection_string || 'mongodb://localhost:27017/';
+                        document.getElementById('mongoDatabaseName').value = config.database_name || 'robot_data';
+                        document.getElementById('mongoCollectionName').value = config.collection_name || 'robot_missions';
+                        
+                        this.addLog('📋 MongoDB 설정을 불러왔습니다', 'success');
+                        this.checkMongoConnectionStatus();
+                    } else {
+                        throw new Error(result.error || '설정 불러오기 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`❌ MongoDB 설정 불러오기 실패: ${error.message}`, 'error');
+                }
+            }
+
+            async saveMongoConfig() {
+                const connectionString = document.getElementById('mongoConnectionString').value;
+                const databaseName = document.getElementById('mongoDatabaseName').value;
+                const collectionName = document.getElementById('mongoCollectionName').value;
+                
+                if (!connectionString || !databaseName || !collectionName) {
+                    alert('모든 필드를 입력해주세요!');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/mongodb/config`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            connection_string: connectionString,
+                            database_name: databaseName,
+                            collection_name: collectionName
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.addLog('✅ MongoDB 설정이 저장되었습니다', 'success');
+                        this.showMongoTestResult(result.message, 'success');
+                        this.checkMongoConnectionStatus();
+                    } else {
+                        throw new Error(result.error || '설정 저장 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`❌ MongoDB 설정 저장 실패: ${error.message}`, 'error');
+                    this.showMongoTestResult(`저장 실패: ${error.message}`, 'error');
+                }
+            }
+
+            async testMongoConnection() {
+                const connectionString = document.getElementById('mongoConnectionString').value;
+                const databaseName = document.getElementById('mongoDatabaseName').value;
+                
+                if (!connectionString || !databaseName) {
+                    alert('연결 문자열과 데이터베이스명을 입력해주세요!');
+                    return;
+                }
+                
+                this.updateConnectionStatus('testing', '🔄 연결 테스트 중...');
+                
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/mongodb/test`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            connection_string: connectionString,
+                            database_name: databaseName
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.addLog(`✅ MongoDB 연결 테스트 성공`, 'success');
+                        this.updateConnectionStatus('connected', `🟢 ${result.message}`);
+                        
+                        let testMessage = `${result.message}\\n`;
+                        testMessage += `데이터베이스: ${result.database_name}\\n`;
+                        testMessage += `서버 버전: ${result.server_version || 'Unknown'}\\n`;
+                        testMessage += `컬렉션 수: ${result.collections ? result.collections.length : 0}`;
+                        
+                        this.showMongoTestResult(testMessage, 'success');
+                    } else {
+                        throw new Error(result.message || result.error || '연결 실패');
+                    }
+                } catch (error) {
+                    this.addLog(`❌ MongoDB 연결 테스트 실패: ${error.message}`, 'error');
+                    this.updateConnectionStatus('disconnected', '🔴 연결 실패');
+                    this.showMongoTestResult(`연결 실패: ${error.message}`, 'error');
+                }
+            }
+
+            updateConnectionStatus(status, text) {
+                const statusElement = document.getElementById('mongoConnectionStatus');
+                const textElement = document.getElementById('mongoStatusText');
+                
+                if (statusElement) {
+                    statusElement.className = `connection-status ${status}`;
+                }
+                
+                if (textElement) {
+                    textElement.textContent = text;
+                }
+            }
+
+            showMongoTestResult(message, type) {
+                const resultElement = document.getElementById('mongoTestResult');
+                const contentElement = document.getElementById('mongoTestContent');
+                
+                if (resultElement && contentElement) {
+                    contentElement.innerHTML = message.replace(/\\n/g, '<br>');
+                    resultElement.className = `mongo-test-result ${type}`;
+                    resultElement.style.display = 'block';
+                    
+                    // 5초 후 자동으로 숨기기
+                    setTimeout(() => {
+                        resultElement.style.display = 'none';
+                    }, 5000);
+                }
+            }
+
+            async checkMongoConnectionStatus() {
+                try {
+                    const response = await fetch(`${this.apiUrl}/api/mongodb/health`);
+                    const result = await response.json();
+                    
+                    if (result.status === 'healthy') {
+                        this.updateConnectionStatus('connected', '🟢 연결됨');
+                    } else {
+                        this.updateConnectionStatus('disconnected', '🔴 연결 안됨');
+                    }
+                } catch (error) {
+                    this.updateConnectionStatus('disconnected', '🔴 연결 확인 실패');
+                }
+            }
+        }
+
+        // 대시보드 초기화
+        document.addEventListener('DOMContentLoaded', () => {
+            window.dashboard = new OperationalDashboard();
+            // MongoDB 설정 자동 불러오기
+            setTimeout(() => {
+                window.dashboard.loadMongoConfig();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

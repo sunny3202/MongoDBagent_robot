@@ -1,0 +1,50 @@
+🎯 실행 파일(.exe) 생성 가이드
+===============================================
+
+📦 PyInstaller 사용 방법:
+
+1️⃣ PyInstaller 설치:
+pip install pyinstaller
+
+2️⃣ EXE 파일 생성:
+pyinstaller --onefile --windowed --icon=robot.ico api_server.py
+
+3️⃣ 고급 설정 (spec 파일):
+pyinstaller --onefile --add-data "templates;templates" --add-data "simulator_config.json;." api_server.py
+
+📋 생성되는 파일들:
+- dist/api_server.exe  ← 이것이 실행 파일!
+- build/ (임시 폴더)
+- api_server.spec (설정 파일)
+
+🚀 Auto-py-to-exe 사용 (GUI 방식):
+1. pip install auto-py-to-exe
+2. auto-py-to-exe 실행
+3. GUI에서 설정하고 변환
+
+⚙️ 실행 파일에 포함해야 할 것들:
+- simulator_config.json
+- templates/ 폴더
+- requirements.txt (설명용)
+
+🎨 아이콘 만들기:
+- 온라인에서 robot.png → robot.ico 변환
+- 또는 기본 아이콘 사용
+
+📝 배포 패키지 구성:
+RobotSimulator/
+├── 🤖 로봇시뮬레이터.exe
+├── 📄 simulator_config.json
+├── 📁 templates/
+├── 📄 사용법.txt
+└── 📄 MongoDB_설정_가이드.txt
+
+✅ 장점:
+- Python 설치 불필요
+- 더블클릭으로 바로 실행
+- 전문적인 모습
+
+❌ 단점:
+- 파일 크기 큼 (50-100MB)
+- 생성 과정 복잡
+- 바이러스 오탐 가능성
