@@ -1,0 +1,63 @@
+🔄 GitHub 동기화 가이드
+=====================
+
+📋 현재 상태
+-----------
+✅ Git 사용자: sunny3202
+✅ 원격 저장소: https://github.com/sunny3202/MongoDBagent_robot.git
+✅ 브랜치: main
+✅ 동기화 상태: 최신
+
+🔄 일상적인 동기화 과정
+---------------------
+
+1️⃣ 코드 수정 후 상태 확인
+   git status
+
+2️⃣ 변경사항 추가
+   git add .
+
+3️⃣ 커밋
+   git commit -m "수정 내용 설명"
+
+4️⃣ GitHub에 업로드
+   git push origin main
+
+5️⃣ 다른 PC에서 다운로드
+   git pull origin main
+
+⚡ 빠른 명령어
+-------------
+# 상태 확인
+git status
+
+# 모든 변경사항 추가 및 커밋
+git add . && git commit -m "업데이트"
+
+# GitHub에 업로드
+git push
+
+# GitHub에서 다운로드
+git pull
+
+🔧 문제 해결
+-----------
+# 충돌 해결
+git merge --abort  # 병합 취소
+git reset --hard HEAD  # 변경사항 취소
+
+# 원격 저장소 재설정
+git remote set-url origin https://github.com/sunny3202/MongoDBagent_robot.git
+
+# 강제 업로드 (주의!)
+git push --force origin main
+
+📞 자주 사용하는 명령어
+---------------------
+git status          # 상태 확인
+git add .           # 모든 파일 추가
+git commit -m "메시지"  # 커밋
+git push            # 업로드
+git pull            # 다운로드
+git log --oneline   # 커밋 히스토리
+git diff            # 변경사항 확인

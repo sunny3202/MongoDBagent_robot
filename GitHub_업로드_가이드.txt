@@ -22,7 +22,7 @@
 
 3. 사용자 정보 설정:
    git config user.name "sunny3202"
-   git config user.email "your-email@example.com"
+   git config user.email "zzamfour@gmail.com"
 
 4. 원격 저장소 연결:
    git remote add origin https://github.com/sunny3202/MongoDBagent_robot.git

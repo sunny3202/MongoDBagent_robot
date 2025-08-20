@@ -1,0 +1,98 @@
+🔗 Cursor와 Git 연동 가이드
+==========================
+
+✅ 현재 설정 완료
+---------------
+- Git 경로: C:\Program Files\Git\bin\git.exe
+- 사용자: sunny3202
+- 이메일: zzamfour@gmail.com
+- 원격 저장소: https://github.com/sunny3202/MongoDBagent_robot.git
+
+🎯 Cursor에서 Git 사용하기
+------------------------
+
+1️⃣ Git 패널 열기
+   - 단축키: Ctrl + Shift + G
+   - 또는: View → Source Control
+
+2️⃣ 변경사항 확인
+   - Changes 탭에서 수정된 파일 확인
+   - + 아이콘: 파일 스테이징
+   - - 아이콘: 스테이징 취소
+
+3️⃣ 커밋하기
+   - 메시지 입력 후 ✓ 아이콘 클릭
+   - 또는 Ctrl + Enter
+
+4️⃣ 푸시하기
+   - ↑ 아이콘 클릭 (Sync Changes)
+   - 또는 ... → Push
+
+5️⃣ 풀하기
+   - ↓ 아이콘 클릭 (Pull)
+   - 또는 ... → Pull
+
+⚡ 자주 사용하는 단축키
+---------------------
+Ctrl + Shift + G    # Git 패널 열기
+Ctrl + Enter        # 커밋
+Ctrl + Shift + P    # 명령 팔레트
+Ctrl + K, Ctrl + H  # Git 히스토리
+
+🔧 명령 팔레트 Git 명령어
+-----------------------
+Git: Clone          # 저장소 클론
+Git: Pull           # 원격에서 가져오기
+Git: Push           # 원격에 업로드
+Git: Commit         # 커밋
+Git: Checkout       # 브랜치 변경
+Git: Merge          # 병합
+Git: Rebase         # 리베이스
+Git: Stash          # 임시 저장
+Git: Log            # 커밋 히스토리
+
+📊 Git 상태 표시
+--------------
+🟢 파일명 (M)     # 수정됨
+🟡 파일명 (A)     # 추가됨
+🔴 파일명 (D)     # 삭제됨
+⚪ 파일명 (U)     # 추적되지 않음
+
+🔄 자동 동기화 설정
+-----------------
+✅ 자동 Fetch: 3분마다
+✅ 푸시 전 Pull: 활성화
+✅ 스마트 커밋: 활성화
+✅ 성공 알림: 활성화
+
+🎨 Git 데코레이션
+---------------
+✅ 파일 상태 색상 표시
+✅ 브랜치 정보 표시
+✅ 커밋 정보 표시
+✅ 변경사항 하이라이트
+
+🔍 문제 해결
+-----------
+1. Git 패널이 안 보이는 경우
+   - View → Source Control
+   - 또는 Ctrl + Shift + G
+
+2. Git 명령어가 안 되는 경우
+   - 터미널에서 git --version 확인
+   - Git 재설치 필요할 수 있음
+
+3. 인증 오류
+   - GitHub Personal Access Token 사용
+   - 또는 SSH 키 설정
+
+4. 충돌 해결
+   - Cursor의 병합 에디터 사용
+   - 충돌 부분 수동 해결
+
+📞 유용한 팁
+-----------
+- 커밋 메시지는 명확하게 작성
+- 자주 커밋하고 푸시하기
+- 브랜치 사용으로 안전한 개발
+- .gitignore 파일로 불필요한 파일 제외
